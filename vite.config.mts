@@ -3,7 +3,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  root: path.resolve(__dirname, 'renderer'),
+  root: path.resolve(import.meta.dirname, 'renderer'),
   base: './', // critical for file:// loads in production
   server: {
     port: 5173,

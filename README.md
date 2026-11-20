@@ -26,9 +26,8 @@ minimal-electron-bsql/
 
 ## Requirements
 
-- Node.js ≥ 18
-- macOS (Apple Silicon or Intel). Windows & Linux should work with native build tools installed.
-- Xcode Command Line Tools (macOS) or MSVC Build Tools (Windows) for native rebuilds
+- Node.js ≥ 22.12
+- macOS, Windows or Linux on x64 or arm64. No native toolchain is needed: `better-sqlite3` ships N-API prebuilds for these platforms.
 
 ---
 
@@ -40,7 +39,7 @@ cd minimal-electron-bsql
 npm install
 ```
 
-ℹ️ On install, native modules are rebuilt for your Electron version via `@electron/rebuild`.
+ℹ️ Since v13, `better-sqlite3` uses N-API, so its bundled prebuilt binary loads in any Electron version. There is no `electron-rebuild` step. The Electron binary itself downloads on the first `electron` run.
 
 ⸻
 
@@ -49,7 +48,6 @@ Scripts
 - npm run dev → compile TS and start Electron in dev mode
 - npm run build → compile TypeScript only
 - npm run start → start Electron with compiled code
-- npm run rebuild → force-rebuild native modules (better-sqlite3)
 - npm run dist → create distributable builds via electron-builder
 - npm run pack → package into unpacked app directory
 
@@ -66,25 +64,24 @@ In src/main/index.ts:
 ⸻
 
 Packaging notes
-• Native modules: better-sqlite3.node must live outside app.asar. This is handled via:
+
+- Native modules: the `.node` prebuilds must live outside `app.asar`. This is handled via:
 
 ```
-"asarUnpack": ["node_modules/better-sqlite3/**/*"]
+"asarUnpack": ["node_modules/better-sqlite3/prebuilds/*.node"]
 ```
 
-- Cross-arch builds (macOS):
-- Build separately for arm64 and x64:
+- `"npmRebuild": false` stops electron-builder from compiling better-sqlite3 from source. A locally compiled `build/Release` binary takes precedence over the prebuilds, so never let one sneak in.
+- `better-sqlite3`'s SQLite sources (`deps/`, `src/`) are excluded from the package; only `lib/` and `prebuilds/` are needed at runtime.
+- Cross-arch builds (macOS): every build contains both `darwin-arm64.node` and `darwin-x64.node`, so any arch works:
 
 ```bash
-npm run dist -- --mac arm64
-npm run dist -- --mac x64
+npm run dist -- --mac --arm64
+npm run dist -- --mac --x64
+npm run dist -- --mac --universal
 ```
 
-- Optionally merge into a universal binary:
-
-```bash
-npx electron-builder --universal
-```
+- Universal builds need `mac.x64ArchFiles` to cover the darwin prebuilds, because they are identical in the x64 and arm64 halves.
 
 - Database location: Always use app.getPath('userData'). Do not write next to your code files, since those are inside app.asar when packaged.
 
@@ -92,13 +89,12 @@ npx electron-builder --universal
 
 Common pitfalls & fixes
 
-- was compiled against a different Node.js version error
-- Run npm run rebuild after npm install or upgrading Electron.
-- .node module not found after packaging
-- Check asarUnpack includes better-sqlite3.
-- Windows/Linux builds
-- Windows: install Build Tools for Visual Studio + Python
-- Linux: sudo apt install build-essential python3
+- `was compiled against a different Node.js version` error
+  - Something compiled better-sqlite3 from source (`node_modules/better-sqlite3/build/Release/better_sqlite3.node` exists). Delete `node_modules/better-sqlite3/build` so the N-API prebuild is used.
+- `.node` module not found after packaging
+  - Check `asarUnpack` includes `node_modules/better-sqlite3/prebuilds/*.node`.
+- Platforms without a prebuild (e.g. 32-bit)
+  - better-sqlite3 falls back to compiling with node-gyp, which needs Python and a C++ toolchain.
 
 ## License
 

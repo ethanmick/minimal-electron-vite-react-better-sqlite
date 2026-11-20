@@ -10,27 +10,29 @@
     "dev:main": "tsc -w --preserveWatchOutput",
     "electron": "wait-on tcp:5173 && electron .",
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:main\" \"npm:electron\"",
-    "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "postinstall": "electron-builder install-app-deps && npm run rebuild",
     "pack": "electron-builder --dir",
     "dist": "npm run build && electron-builder"
   },
   "build": {
     "appId": "com.example.minimalbsqlite",
+    "npmRebuild": false,
     "files": [
       "dist/**",
       "renderer/dist/**",
-      "package.json"
+      "package.json",
+      "!node_modules/better-sqlite3/{build,deps,src}/**",
+      "!node_modules/better-sqlite3/binding.gyp"
     ],
     "asar": true,
     "asarUnpack": [
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/better-sqlite3/prebuilds/*.node"
     ],
     "mac": {
       "target": [
         "dmg",
         "zip"
-      ]
+      ],
+      "x64ArchFiles": "Contents/Resources/app.asar.unpacked/node_modules/better-sqlite3/prebuilds/darwin-*.node"
     },
     "win": {
       "target": "nsis"
@@ -43,23 +45,22 @@
     }
   },
   "dependencies": {
-    "better-sqlite3": "12.2.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "better-sqlite3": "13.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@electron/rebuild": "4.0.1",
-    "@types/better-sqlite3": "7.6.13",
-    "@types/node": "24.3.2",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react": "^5.0.2",
-    "concurrently": "^9.2.1",
-    "electron": "38.1.0",
-    "electron-builder": "26.0.12",
-    "typescript": "5.9.2",
-    "vite": "^7.1.5",
-    "wait-on": "^8.0.5"
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0",
+    "typescript": "7.0.2",
+    "vite": "^8.3.8",
+    "wait-on": "^9.5.1"
   },
-  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+  "packageManager": "npm@11.16.0"
 }
